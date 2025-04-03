@@ -1,16 +1,22 @@
+import asyncio
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+from sqlalchemy.ext.asyncio import create_async_engine
+
+from userhub import settings
+from models.users import Base
 
 config = context.config
+config.set_main_option("sqlalchemy.url", settings.SQLALCHEMYURL.render_as_string(False))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = None
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
@@ -59,7 +65,29 @@ def run_migrations_online() -> None:
             context.run_migrations()
 
 
+def run_async_migrations_online() -> None:
+    connectable = create_async_engine(config.get_main_option("sqlalchemy.url"))
+
+    async def run_async_migrations():
+        async with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations)
+
+    def do_run_migrations(connection):
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            compare_server_default=True,
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+    asyncio.run(run_async_migrations())
+
+
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    run_migrations_online()
+    # run_migrations_online()
+    run_async_migrations_online()
