@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import BIGINT
+from sqlalchemy import BIGINT, func
 from sqlalchemy.orm import mapped_column, Mapped
 
 from database import Base
@@ -14,9 +14,9 @@ class Users(Base):
     surname: Mapped[str] = mapped_column(nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        default=datetime.now(timezone.utc),
+        default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
-        default=datetime.now(timezone.utc),
-        onupdate=datetime.now(timezone.utc)
+        default=func.now(),
+        onupdate=func.now()
     )
