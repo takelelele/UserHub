@@ -1,9 +1,7 @@
-from typing import List
-
 from litestar import Router, get, post, patch, delete, status_codes
 from litestar.di import Provide
 from litestar.exceptions import HTTPException
-from pydantic import TypeAdapter
+from msgspec import convert
 from sqlalchemy import (
     select,
     update,
@@ -14,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from models.users import Users
 from schema.users import CreateUserSchema, UserSchema, UpdateUserSchema
+from utils import struct_to_dict
 
 
 @post(
@@ -36,7 +35,7 @@ async def create_user(
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    return UserSchema.model_validate(user)
+    return convert(user.__dict__, type=UserSchema)
 
 
 @get(
@@ -51,7 +50,7 @@ async def all_users(
 ) -> list[UserSchema]:
     users = await db.scalars(select(Users))
 
-    return TypeAdapter(List[UserSchema]).validate_python(users)
+    return [convert(user.__dict__, type=UserSchema) for user in users]
 
 
 @get(
@@ -71,7 +70,7 @@ async def user_by_id(
     )
 
     if user:
-        return UserSchema.model_validate(user)
+        return convert(user.__dict__, type=UserSchema)
 
     raise HTTPException(
         status_code=status_codes.HTTP_404_NOT_FOUND,
@@ -94,7 +93,7 @@ async def update_user_data(
     user = await db.scalar(
         update(Users)
         .where(Users.id == user_id)
-        .values(**data.model_dump(exclude_none=True))
+        .values(struct_to_dict(data))
         .returning(Users)
     )
 
@@ -102,7 +101,7 @@ async def update_user_data(
         await db.commit()
         await db.refresh(user)
 
-        return UserSchema.model_validate(user)
+        return convert(user.__dict__, type=UserSchema)
 
     raise HTTPException(
         status_code=status_codes.HTTP_404_NOT_FOUND,
