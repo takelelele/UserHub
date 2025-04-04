@@ -1,21 +1,21 @@
-from pydantic import BaseModel, ConfigDict
+from typing import Optional
+
+from msgspec import Struct
 
 
-class CreateUserSchema(BaseModel):
+class CreateUserSchema(Struct):
     name: str
     surname: str
     password: str
 
 
-class UserSchema(BaseModel):
+class UserSchema(Struct):
     id: int
     name: str
     surname: str
 
-    model_config = ConfigDict(from_attributes=True)
 
-
-class UpdateUserSchema(BaseModel):
-    name: str = None
-    surname: str = None
-    password: str = None
+class UpdateUserSchema(Struct):
+    name: Optional[str] = None
+    surname: Optional[str] = None
+    password: Optional[str] = None
