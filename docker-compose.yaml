@@ -1,0 +1,24 @@
+services:
+  app:
+    build: .
+    container_name: APP
+    env_file: .env
+    environment:
+      DEBUG: False
+      DB_HOST: db
+    ports:
+      - "$APPLICATION_PORT:8000"
+    depends_on:
+      - db
+    command: sh -c "poetry run alembic upgrade head & poetry run python main.py"
+
+
+  db:
+    image: postgres:17.4-alpine
+    container_name: DB
+    ports:
+      - "$DB_PORT:5432"
+    environment:
+      POSTGRES_USER: $DB_USERNAME
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_DB: $DB_NAME
