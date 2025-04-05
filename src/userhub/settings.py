@@ -4,7 +4,7 @@ import os
 
 load_dotenv()
 
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
 APPLICATION_HOST = "localhost" if DEBUG else os.getenv("APPLICATION_HOST")
 APPLICATION_PORT = os.getenv("APPLICATION_PORT")
